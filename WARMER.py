@@ -1,5 +1,6 @@
 
 import math
+import time
 import torch
 import torch.nn as nn
 from torchvision.models.resnet import BasicBlock
@@ -66,24 +67,41 @@ class ResNet2(nn.Module):
 
         return x
 
-device = "cuda:0"
+single_gpu = False
+if single_gpu:
+    device = "cuda:0"
 
-model = ResNet2(BasicBlock, [3, 4, 6, 3], fcExpansion=289, num_classes=2).to(device)
+    model = ResNet2(BasicBlock, [3, 4, 6, 3], fcExpansion=289, num_classes=2).to(device)
 
-criterion = torch.nn.CrossEntropyLoss().to(device)
-optimizer = torch.optim.SGD(model.parameters(), 1e-6, momentum=1e-4, weight_decay=1e-4)
+    criterion = torch.nn.CrossEntropyLoss().to(device)
+    optimizer = torch.optim.SGD(model.parameters(), 1e-6, momentum=1e-4, weight_decay=1e-4)
 
-img = torch.randn((24,3,720,720), dtype=torch.float32).to(device)
-label = torch.tensor([0,1,1,1,
-                      1,0,0,0,
-                      1,0,1,1,
-                      0,1,1,0,
-                      1,1,1,1,
-                      0,0,0,0]).to(device)
+    img = torch.randn((24,3,720,720), dtype=torch.float32).to(device)
+    label = torch.tensor([0,1,1,1,
+                          1,0,0,0,
+                          1,0,1,1,
+                          0,1,1,0,
+                          1,1,1,1,
+                          0,0,0,0]).to(device)
+else:
+    model = nn.DataParallel(ResNet2(BasicBlock, [3, 4, 6, 3], fcExpansion=289, num_classes=2)).cuda()
 
-epoches = 10000000000
-for i in range(epoches):
-    print(f"\rThis is a warm program. You can shut it down any time. {i} / {epoches} | {(i/epoches)*100:.4F} %  ", end='')
+    criterion = torch.nn.CrossEntropyLoss().cuda()
+    optimizer = torch.optim.SGD(model.parameters(), 1e-6, momentum=1e-4, weight_decay=1e-4).cuda()
+
+    img = torch.randn((24, 3, 720, 720), dtype=torch.float32).cuda()
+    label = torch.tensor([0, 1, 1, 1,
+                          1, 0, 0, 0,
+                          1, 0, 1, 1,
+                          0, 1, 1, 0,
+                          1, 1, 1, 1,
+                          0, 0, 0, 0]).cuda()
+
+# epoches = 10000000000
+# for i in range(epoches):
+begin_time = time.time()
+while True:
+    # print(f"\rThis is a warm program. You can shut it down any time. {i} / {epoches} | {(i/epoches)*100:.4F} %  ", end='')
     output = model(img)
     loss = criterion(output, label)
 
@@ -91,3 +109,9 @@ for i in range(epoches):
     loss.backward()
     optimizer.step()
 
+    times = time.time() - begin_time
+    time_day = times // 86400
+    time_h = (times % 86400) // 3600
+    time_m = (times % 3600) // 60
+    time_sec = times % 60
+    print(f"\rRunning Time: {time_day} Day {time_h} Hours {time_m} Min {time_sec} Sec")
