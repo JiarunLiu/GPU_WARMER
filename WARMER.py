@@ -97,11 +97,8 @@ else:
                           1, 1, 1, 1,
                           0, 0, 0, 0]).cuda()
 
-# epoches = 10000000000
-# for i in range(epoches):
 begin_time = time.time()
 while True:
-    # print(f"\rThis is a warm program. You can shut it down any time. {i} / {epoches} | {(i/epoches)*100:.4F} %  ", end='')
     output = model(img)
     loss = criterion(output, label)
 
@@ -114,4 +111,4 @@ while True:
     time_h = (times % 86400) // 3600
     time_m = (times % 3600) // 60
     time_sec = times % 60
-    print(f"\rRunning Time: {time_day} Day {time_h} Hours {time_m} Min {time_sec} Sec")
+    print(f"\rRunning Time: {time_day} Day {time_h} Hours {time_m} Min {time_sec:.2f} Sec", end='')
