@@ -87,7 +87,7 @@ else:
     model = nn.DataParallel(ResNet2(BasicBlock, [3, 4, 6, 3], fcExpansion=289, num_classes=2)).cuda()
 
     criterion = torch.nn.CrossEntropyLoss().cuda()
-    optimizer = torch.optim.SGD(model.parameters(), 1e-6, momentum=1e-4, weight_decay=1e-4).cuda()
+    optimizer = torch.optim.SGD(model.parameters(), 1e-6, momentum=1e-4, weight_decay=1e-4)
 
     img = torch.randn((24, 3, 720, 720), dtype=torch.float32).cuda()
     label = torch.tensor([0, 1, 1, 1,
