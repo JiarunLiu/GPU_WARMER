@@ -69,23 +69,32 @@ class ResNet2(nn.Module):
 
         return x
 
+def print_time_use(begin_time):
+    times = time.time() - begin_time
+    time_day = times // 86400
+    time_h = (times % 86400) // 3600
+    time_m = (times % 3600) // 60
+    time_sec = times % 60
+    print(f"\rRunning Time: {time_day} Day {time_h} Hours {time_m} Min {time_sec:.d} Sec", end='')
+
 
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
 # normal parameters
 parser.add_argument('-s', '--single-gpu', default=False, action='store_true',
                     help='warmer with single gpu')
-parser.add_argument('-b', '--batch-size', default=24, type=int,
+parser.add_argument('-b', '--batch-size', default=48, type=int,
                     metavar='N', help='mini-batch size (default: 24/10G)')
 parser.add_argument('-img', '--image-size', default=720, type=int,
                     metavar='N', help='mini-batch size (default: 256)')
-parser.add_argument('-num', '--sample-number', default=100, type=int,
+parser.add_argument('-num', '--sample-number', default=2560, type=int,
                     metavar='N', help='mini-batch size (default: 256)')
 parser.add_argument('-cls', '--num-class', default=100, type=int,
                     metavar='N', help='mini-batch size (default: 256)')
-parser.add_argument('-work', '--num-workers', default=8, type=int,
+parser.add_argument('-work', '--num-workers', default=4, type=int,
                     help='num of dataloader workers')
 args = parser.parse_args()
 
+print("Initializing...")
 model = nn.DataParallel(ResNet2(BasicBlock, [3, 4, 6, 3], fcExpansion=289, num_classes=args.num_class)).cuda()
 criterion = torch.nn.CrossEntropyLoss().cuda()
 optimizer = torch.optim.SGD(model.parameters(), 1e-6, momentum=1e-4, weight_decay=1e-4)
@@ -94,7 +103,9 @@ imgs = torch.randn((args.sample_number, 3, args.image_size, args.image_size), dt
 labels = torch.randint(0, args.num_class, (args.sample_number,))
 dataset = torch.utils.data.TensorDataset(imgs, labels)
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
+print("Finish Initialization!")
 
+print("Start warmer at {}".format(time.asctime(time.localtime())))
 begin_time = time.time()
 while True:
     for img, label in dataloader:
@@ -108,9 +119,4 @@ while True:
         loss.backward()
         optimizer.step()
 
-        times = time.time() - begin_time
-        time_day = times // 86400
-        time_h = (times % 86400) // 3600
-        time_m = (times % 3600) // 60
-        time_sec = times % 60
-        print(f"\rRunning Time: {time_day} Day {time_h} Hours {time_m} Min {time_sec:.2f} Sec", end='')
+        print_time_use(begin_time)
