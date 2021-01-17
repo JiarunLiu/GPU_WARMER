@@ -72,12 +72,10 @@ class ResNet2(nn.Module):
 
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
 # normal parameters
-parser.add_argument('-b', '--batch-size', default=24, type=int,
-                    metavar='N', help='mini-batch size (default: 24/10G)')
 parser.add_argument('-s', '--single-gpu', default=False, action='store_true',
                     help='warmer with single gpu')
 parser.add_argument('-b', '--batch-size', default=24, type=int,
-                    metavar='N', help='mini-batch size (default: 256)')
+                    metavar='N', help='mini-batch size (default: 24/10G)')
 parser.add_argument('-img', '--image-size', default=720, type=int,
                     metavar='N', help='mini-batch size (default: 256)')
 parser.add_argument('-num', '--sample-number', default=10000, type=int,
