@@ -78,10 +78,12 @@ parser.add_argument('-b', '--batch-size', default=24, type=int,
                     metavar='N', help='mini-batch size (default: 24/10G)')
 parser.add_argument('-img', '--image-size', default=720, type=int,
                     metavar='N', help='mini-batch size (default: 256)')
-parser.add_argument('-num', '--sample-number', default=10000, type=int,
+parser.add_argument('-num', '--sample-number', default=100, type=int,
                     metavar='N', help='mini-batch size (default: 256)')
-parser.add_argument('-cls', '--num-class', default=1000, type=int,
+parser.add_argument('-cls', '--num-class', default=100, type=int,
                     metavar='N', help='mini-batch size (default: 256)')
+parser.add_argument('-work', '--num-workers', default=8, type=int,
+                    help='num of dataloader workers')
 args = parser.parse_args()
 
 model = nn.DataParallel(ResNet2(BasicBlock, [3, 4, 6, 3], fcExpansion=289, num_classes=args.num_class)).cuda()
@@ -91,7 +93,7 @@ optimizer = torch.optim.SGD(model.parameters(), 1e-6, momentum=1e-4, weight_deca
 imgs = torch.randn((args.sample_number, 3, args.image_size, args.image_size), dtype=torch.float32)
 labels = torch.randint(0, args.num_class, (args.sample_number,))
 dataset = torch.utils.data.TensorDataset(imgs, labels)
-dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
+dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
 
 begin_time = time.time()
 while True:
