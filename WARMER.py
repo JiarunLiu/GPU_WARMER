@@ -88,7 +88,7 @@ model = nn.DataParallel(ResNet2(BasicBlock, [3, 4, 6, 3], fcExpansion=289, num_c
 criterion = torch.nn.CrossEntropyLoss().cuda()
 optimizer = torch.optim.SGD(model.parameters(), 1e-6, momentum=1e-4, weight_decay=1e-4)
 
-imgs = torch.randn((args.batch_size, 3, args.image_size, args.image_size), dtype=torch.float32)
+imgs = torch.randn((args.sample_number, 3, args.image_size, args.image_size), dtype=torch.float32)
 labels = torch.randint(0, args.num_class, (args.sample_number,))
 dataset = torch.utils.data.TensorDataset(imgs, labels)
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
