@@ -75,7 +75,7 @@ parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
 parser.add_argument('-b', '--batch-size', default=24, type=int,
                     metavar='N', help='mini-batch size (default: 24/10G)')
 parser.add_argument('-s', '--single-gpu', default=False, action='store_true',
-                    metavar='N', help='warmer with single gpu')
+                    help='warmer with single gpu')
 parser.add_argument('-b', '--batch-size', default=24, type=int,
                     metavar='N', help='mini-batch size (default: 256)')
 parser.add_argument('-img', '--image-size', default=720, type=int,
