@@ -75,7 +75,7 @@ def print_time_use(begin_time):
     time_h = (times % 86400) // 3600
     time_m = (times % 3600) // 60
     time_sec = times % 60
-    print(f"\rRunning Time: {time_day} Day {time_h} Hours {time_m} Min {time_sec:.d} Sec", end='')
+    print(f"\rRunning Time: {time_day} Day {time_h} Hours {time_m} Min {time_sec:.0f} Sec", end='')
 
 
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
