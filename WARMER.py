@@ -1,14 +1,16 @@
-
 import math
 import time
 import torch
+import argparse
+import torchvision
 import torch.nn as nn
 from torchvision.models.resnet import BasicBlock
+from torchvision.transforms import transforms
 
 
 class ResNet2(nn.Module):
 
-    def __init__(self, block, layers, fcExpansion ,num_classes=1000):
+    def __init__(self, block, layers, fcExpansion, num_classes=1000):
         self.inplanes = 64
         super(ResNet2, self).__init__()
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
@@ -67,48 +69,48 @@ class ResNet2(nn.Module):
 
         return x
 
-single_gpu = False
-if single_gpu:
-    device = "cuda:0"
 
-    model = ResNet2(BasicBlock, [3, 4, 6, 3], fcExpansion=289, num_classes=2).to(device)
+parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
+# normal parameters
+parser.add_argument('-b', '--batch-size', default=24, type=int,
+                    metavar='N', help='mini-batch size (default: 24/10G)')
+parser.add_argument('-s', '--single-gpu', default=False, action='store_true',
+                    metavar='N', help='warmer with single gpu')
+parser.add_argument('-b', '--batch-size', default=24, type=int,
+                    metavar='N', help='mini-batch size (default: 256)')
+parser.add_argument('-img', '--image-size', default=720, type=int,
+                    metavar='N', help='mini-batch size (default: 256)')
+parser.add_argument('-num', '--sample-number', default=10000, type=int,
+                    metavar='N', help='mini-batch size (default: 256)')
+parser.add_argument('-cls', '--num-class', default=1000, type=int,
+                    metavar='N', help='mini-batch size (default: 256)')
+args = parser.parse_args()
 
-    criterion = torch.nn.CrossEntropyLoss().to(device)
-    optimizer = torch.optim.SGD(model.parameters(), 1e-6, momentum=1e-4, weight_decay=1e-4)
+model = nn.DataParallel(ResNet2(BasicBlock, [3, 4, 6, 3], fcExpansion=289, num_classes=args.num_class)).cuda()
+criterion = torch.nn.CrossEntropyLoss().cuda()
+optimizer = torch.optim.SGD(model.parameters(), 1e-6, momentum=1e-4, weight_decay=1e-4)
 
-    img = torch.randn((24,3,720,720), dtype=torch.float32).to(device)
-    label = torch.tensor([0,1,1,1,
-                          1,0,0,0,
-                          1,0,1,1,
-                          0,1,1,0,
-                          1,1,1,1,
-                          0,0,0,0]).to(device)
-else:
-    model = nn.DataParallel(ResNet2(BasicBlock, [3, 4, 6, 3], fcExpansion=289, num_classes=2)).cuda()
-
-    criterion = torch.nn.CrossEntropyLoss().cuda()
-    optimizer = torch.optim.SGD(model.parameters(), 1e-6, momentum=1e-4, weight_decay=1e-4)
-
-    img = torch.randn((24, 3, 720, 720), dtype=torch.float32).cuda()
-    label = torch.tensor([0, 1, 1, 1,
-                          1, 0, 0, 0,
-                          1, 0, 1, 1,
-                          0, 1, 1, 0,
-                          1, 1, 1, 1,
-                          0, 0, 0, 0]).cuda()
+imgs = torch.randn((args.batch_size, 3, args.image_size, args.image_size), dtype=torch.float32)
+labels = torch.randint(0, args.num_class, (args.sample_number,))
+dataset = torch.utils.data.TensorDataset(imgs, labels)
+dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
 
 begin_time = time.time()
 while True:
-    output = model(img)
-    loss = criterion(output, label)
+    for img, label in dataloader:
+        img = img.cuda()
+        label = label.cuda()
 
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
+        output = model(img)
+        loss = criterion(output, label)
 
-    times = time.time() - begin_time
-    time_day = times // 86400
-    time_h = (times % 86400) // 3600
-    time_m = (times % 3600) // 60
-    time_sec = times % 60
-    print(f"\rRunning Time: {time_day} Day {time_h} Hours {time_m} Min {time_sec:.2f} Sec", end='')
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        times = time.time() - begin_time
+        time_day = times // 86400
+        time_h = (times % 86400) // 3600
+        time_m = (times % 3600) // 60
+        time_sec = times % 60
+        print(f"\rRunning Time: {time_day} Day {time_h} Hours {time_m} Min {time_sec:.2f} Sec", end='')
