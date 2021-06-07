@@ -92,6 +92,10 @@ parser.add_argument('-cls', '--num-class', default=100, type=int,
                     metavar='N', help='mini-batch size (default: 256)')
 parser.add_argument('-work', '--num-workers', default=4, type=int,
                     help='num of dataloader workers')
+parser.add_argument('-p', '--pause', default=False, action='store_true',
+                    help="Pause in each batch (default: False)")
+parser.add_argument('-pt', '--pause-time', default=5, type=int,
+                    help="Pause time in each time (default: 5)")
 args = parser.parse_args()
 
 print("Initializing...")
@@ -118,5 +122,8 @@ while True:
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+
+        if args.pause:
+            time.sleep(args.pause_time)
 
         print_time_use(begin_time)
