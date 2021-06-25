@@ -133,7 +133,7 @@ if args.mode == 'simulate':
 
 elif args.mode == 'maximum':
     imgs = torch.randn((args.batch_size, 3, args.image_size, args.image_size), dtype=torch.float32).cuda()
-    labels = torch.randint(0, args.num_class, (args.sample_number,)).cuda()
+    labels = torch.randint(0, args.num_class, (args.batch_size,)).cuda()
     print("Finish Initialization!")
 
     print("Start warmer at {}".format(time.asctime(time.localtime())))
