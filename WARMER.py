@@ -80,8 +80,6 @@ def print_time_use(begin_time):
 
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
 # normal parameters
-parser.add_argument('-s', '--single-gpu', default=False, action='store_true',
-                    help='warmer with single gpu')
 parser.add_argument('-b', '--batch-size', default=48, type=int,
                     metavar='N', help='mini-batch size (default: 24/10G)')
 parser.add_argument('-img', '--image-size', default=720, type=int,
@@ -96,16 +94,18 @@ parser.add_argument('-p', '--pause', default=False, action='store_true',
                     help="Pause in each batch (default: False)")
 parser.add_argument('-pt', '--pause-time', default=5, type=int,
                     help="Pause time in each time (default: 5)")
-parser.add_argument('-mode', '--mode', default='simulate', type=str, choices=['simulate', 'maximum'],
+parser.add_argument('-gid', '--gpu-id', default=0, type=int,
+                    help="gpu id")
+parser.add_argument('-mode', '--mode', default='simulate', type=str, choices=['simulate', 'maximum', 'maximum_single'],
                     help="Warmer mode: simulate, maximum.")
 args = parser.parse_args()
 
-print("Initializing...")
-model = nn.DataParallel(ResNet2(BasicBlock, [3, 4, 6, 3], fcExpansion=289, num_classes=args.num_class)).cuda()
-criterion = torch.nn.CrossEntropyLoss().cuda()
-optimizer = torch.optim.SGD(model.parameters(), 1e-6, momentum=1e-4, weight_decay=1e-4)
-
 if args.mode == 'simulate':
+    print("Initializing...")
+    model = nn.DataParallel(ResNet2(BasicBlock, [3, 4, 6, 3], fcExpansion=289, num_classes=args.num_class)).cuda()
+    criterion = torch.nn.CrossEntropyLoss().cuda()
+    optimizer = torch.optim.SGD(model.parameters(), 1e-6, momentum=1e-4, weight_decay=1e-4)
+
     imgs = torch.randn((args.sample_number, 3, args.image_size, args.image_size), dtype=torch.float32)
     labels = torch.randint(0, args.num_class, (args.sample_number,))
     dataset = torch.utils.data.TensorDataset(imgs, labels)
@@ -132,6 +132,11 @@ if args.mode == 'simulate':
             print_time_use(begin_time)
 
 elif args.mode == 'maximum':
+    print("Initializing...")
+    model = nn.DataParallel(ResNet2(BasicBlock, [3, 4, 6, 3], fcExpansion=289, num_classes=args.num_class)).cuda()
+    criterion = torch.nn.CrossEntropyLoss().cuda()
+    optimizer = torch.optim.SGD(model.parameters(), 1e-6, momentum=1e-4, weight_decay=1e-4)
+
     imgs = torch.randn((args.batch_size, 3, args.image_size, args.image_size), dtype=torch.float32).cuda()
     labels = torch.randint(0, args.num_class, (args.batch_size,)).cuda()
     print("Finish Initialization!")
@@ -151,5 +156,33 @@ elif args.mode == 'maximum':
         if i == 100:
             i = 0
             print_time_use(begin_time)
+
+elif args.mode == 'maximum_single':
+    print("Initializing...")
+    model = ResNet2(BasicBlock, [3, 4, 6, 3], fcExpansion=289, num_classes=args.num_class).to("cuda:{}".format(args.gpu_id))
+    criterion = torch.nn.CrossEntropyLoss().to("cuda:{}".format(args.gpu_id))
+    optimizer = torch.optim.SGD(model.parameters(), 1e-6, momentum=1e-4, weight_decay=1e-4)
+
+    imgs = torch.randn((args.batch_size, 3, args.image_size, args.image_size), dtype=torch.float32).to("cuda:{}".format(args.gpu_id))
+    labels = torch.randint(0, args.num_class, (args.batch_size,)).to("cuda:{}".format(args.gpu_id))
+    print("Finish Initialization!")
+
+    print("Start warmer at {}".format(time.asctime(time.localtime())))
+    begin_time = time.time()
+    i = 0
+    while True:
+        output = model(imgs)
+        loss = criterion(output, labels)
+
+        # optimizer.zero_grad()
+        loss.backward()
+        # optimizer.step()
+
+        i += 1
+        if i == 100:
+            i = 0
+            print_time_use(begin_time)
+
+
 else:
     AttributeError("No such mode: {}".format(args.mode))
