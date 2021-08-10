@@ -13,10 +13,19 @@ class LinearNet(nn.Module):
         super(LinearNet, self).__init__()
         self.layers = torch.nn.Sequential(
             torch.nn.Linear(in_feature, 256),
+            torch.nn.ReLU(),
             torch.nn.Linear(256, 1024),
+            torch.nn.ReLU(),
             torch.nn.Linear(1024, 1024),
+            torch.nn.ReLU(),
+            torch.nn.Linear(1024, 1024),
+            torch.nn.ReLU(),
+            torch.nn.Linear(1024, 1024),
+            torch.nn.ReLU(),
             torch.nn.Linear(1024, 256),
+            torch.nn.ReLU(),
             torch.nn.Linear(256, 128),
+            torch.nn.ReLU(),
             torch.nn.Linear(128, out_feature),
         )
 
