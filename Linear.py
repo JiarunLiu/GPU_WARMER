@@ -20,7 +20,7 @@ class LinearNet(nn.Module):
             torch.nn.ReLU()
         )
         self.layer2 = torch.nn.Sequential(
-            *[base_layer for i in range(inner)]
+            *[base_layer for i in range(int(inner))]
         )
         self.layer1 = torch.nn.Sequential(
             torch.nn.Linear(256, 128),
