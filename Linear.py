@@ -9,14 +9,14 @@ from torchvision.transforms import transforms
 
 class LinearNet(nn.Module):
 
-    def __init__(self, in_feature, out_feature, inner=1e8):
+    def __init__(self, in_feature, out_feature, inner=10):
         super(LinearNet, self).__init__()
         self.layer1 = torch.nn.Sequential(
             torch.nn.Linear(in_feature, 256),
             torch.nn.ReLU(),
             torch.nn.Linear(256, 256))
         base_layer = torch.nn.Sequential(
-            torch.nn.Linear(256, 256),
+            torch.nn.Linear(int(2e16), int(2e16)),
             torch.nn.ReLU()
         )
         self.layer2 = torch.nn.Sequential(
